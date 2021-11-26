@@ -1,0 +1,43 @@
+1. Split 4 VMs using Vagrantfile 
+ssh-copy-id to all
+ssh vagrant@10.100.101.103 'sudo chmod 666 /var/run/docker.sock' #for all k-workers to allow run docker in containers
+
+2. We have to 
+git clone https://github.com/kubernetes-sigs/kubespray
+git checkout v2.15.0
+sudo pip3 install -r requirements.txt
+
+########check etcd [17:35] Ihor Pysmennyi
+# Choose data store type for calico: "etcd" or "kdd" (kubernetes datastore)
+calico_datastore: {{ calico.datastore| default('etcd') }}
+
+3. Prepare kubespray:
+cp -rfp inventory/sample inventory/appcluster
+helm_enabled: true inventory/appcluster/group_vars/k8s-cluster/addons.yml
+declare -a IPS=(10.100.101.101 10.100.101.102 10.100.101.103 10.100.101.104 10.100.101.105)
+CONFIG_FILE=inventory/appcluster/hosts.yaml python3 contrib/inventory_builder/inventory.py ${IPS[@]}
+
+ansible-playbook -u vagrant --private-key=~/.ssh/id_rsa --ask-become  -i inventory/appcluster/hosts.yaml -b cluster.yml
+__________________________
+4. Apply all yaml in the kubernetes-jenkins-master and slave to start master
+kubectl apply -f kubernetes-jenkins-master/namespace.yaml 
+kubectl apply -f kubernetes-jenkins-master/casc_config_map.yaml \
+              -f kubernetes-jenkins-master/service.yaml \
+              -f kubernetes-jenkins-master/secrets.yaml \
+              -f kubernetes-jenkins-master/volume.yaml \
+              -f kubernetes-jenkins-master/serviceAccount.yaml \
+              -f kubernetes-jenkins-master/nginx_config_map.yaml \
+              -f kubernetes-jenkins-master/deployment.yaml \
+              -f kubernetes-jenkins-master/expose_ingress.yaml \
+              -f kubernetes-jenkins-slave/deployment.yaml
+
+
+For
+__________________________
+
+5.
+
+#!!!! add/install plugins for jenkins
+Git Parameter
+Docker Pipeline 
+kubernetes

@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: jenkins-agent
+  namespace: jenkins
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: jenkins-agent
+  template:
+    metadata:
+      labels:
+        app: jenkins-agent
+    spec:
+      serviceAccountName: jenkins-admin
+      containers:
+        - name: jenkins-agent
+          image: avattar/jenkins-agent:v0.4.2
+          # imagePullPolicy: Always
+          env:
+          - name: JENKINS_ADMIN_ID
+            valueFrom:
+              secretKeyRef:
+                name: jenkins-secret
+                key: JENKINS_ADMIN_ID
+          - name: JENKINS_ADMIN_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: jenkins-secret
+                key: JENKINS_ADMIN_PASSWORD
+          - name: JENKINS_AGENT_EXECUTORS
+            value: "4"
+          resources:
+            limits:
+              memory: "2Gi"
+              cpu: "1000m"
+            requests:
+              memory: "256Mi"
+              cpu: "50m"
